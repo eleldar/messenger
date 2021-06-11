@@ -6,8 +6,7 @@
 static bool createConnection()
 {
     QSqlDatabase db = QSqlDatabase::addDatabase("QPSQL");
-    db.setHostName("127.0.0.1");
-    db.setPort(5432);
+    db.setHostName("localhost");
     db.setDatabaseName("messages");
     db.setUserName("messenger");
     db.setPassword("messenger");
@@ -32,31 +31,31 @@ int main(int argc, char *argv[])
     //Creating of the data base
     QSqlQuery query;
     QString   str  = "CREATE TABLE messages ("
-                         "id INTEGER PRIMARY KEY, "
+                         "id SERIAL, "
+                         "timestamp timestamp default current_timestamp,"
                          "message  VARCHAR(100), "
                          "read  INTEGER"
                      ");";
     if (!query.exec(str)) {
         QMessageBox::critical(NULL,QObject::tr("Ошибка"), query.lastError().text());
-        return false;
+        //return false;
     }
 
     //Adding some information
     QString strF =
           "INSERT INTO  messages (message, read) "
-          "VALUES('%1', %2);";
+          "VALUES('%2', %3);";
 
     str = strF.arg("Hello 1")
-              .arg("0");
+              .arg("1");
 
     if (!query.exec(str)) {
         QMessageBox::critical(NULL,QObject::tr("Ошибка"), query.lastError().text());
         return false;
     }
 
-    str = strF.arg("2")
-              .arg("Hello 2")
-              .arg("0");
+    str = strF.arg("Hello 2")
+              .arg("2");
     if (!query.exec(str)) {
         QMessageBox::critical(NULL,QObject::tr("Ошибка"), query.lastError().text());
         return false;
