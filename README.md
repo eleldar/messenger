@@ -10,7 +10,15 @@ Messenger/
 └── Messenger_ru_RU.ts
 ```
 ## Монитор:
-...
+```
+Monitor/
+├── main.cpp
+├── mainwindow.cpp
+├── mainwindow.h
+├── mainwindow.ui
+├── Monitor.pro
+└── Monitor_ru_RU.ts
+```
 
 # 2. Бинарные файлы
 ## Мессенджер:
@@ -18,7 +26,7 @@ Messenger/
 Messenger/
 └── Messenger
 ```
-### Запуск
+***Запуск***
 ```
 $ ./Messenger
 ```
@@ -28,7 +36,7 @@ $ ./Messenger
 Monitor/
 └── Monitor
 ```
-### Запуск
+***Запуск***
 ```
 $ ./Monitor
 ```
@@ -41,7 +49,11 @@ $ qmake Messenger.pro
 $ make
 ```
 ## Монитор:
-...
+```
+$ cd Monitor
+$ qmake Monitor.pro
+$ make
+```
 
 # 4. Инсталяция
 ## Установка Qt (на примере ubuntu):
