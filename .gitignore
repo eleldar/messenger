@@ -9,3 +9,10 @@ Messenger/moc_mainwindow.o
 Messenger/moc_predefs.h
 Messenger/ui_mainwindow.h
 Monitor.pro.user
+Monitor/Makefile
+Monitor/main.o
+Monitor/mainwindow.o
+Monitor/moc_mainwindow.cpp
+Monitor/moc_mainwindow.o
+Monitor/moc_predefs.h
+Monitor/ui_mainwindow.h

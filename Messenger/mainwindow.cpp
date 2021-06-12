@@ -15,17 +15,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     QSqlRecord rec     = query.record();
     QString strMessage;
 
-    QStringList messageList;
+    //QStringList messageList;
     while (query.next()) {
         strMessage  = query.value(rec.indexOf("message")).toString();
-        messageList << strMessage;
-        qDebug() << strMessage;
+        ui->listWidget->addItem(strMessage);
     }
-
-    QStringListModel* model = new QStringListModel();
-    model->setStringList(messageList);
-    ui->listView->setModel(model);
-
 }
 
 MainWindow::~MainWindow()
@@ -47,25 +41,8 @@ void MainWindow::on_pushButton_clicked()
             QMessageBox::critical(NULL,QObject::tr("Ошибка"), query.lastError().text());
         }
         else {
-
             //Reading of the data
-            if (!query.exec("SELECT * FROM messages;")) {
-                QMessageBox::critical(NULL,QObject::tr("Ошибка"), query.lastError().text());
-                //return false;
-            }
-            QSqlRecord rec     = query.record();
-            QString strMessage;
-
-            QStringList messageList;
-            while (query.next()) {
-                strMessage  = query.value(rec.indexOf("message")).toString();
-                messageList << strMessage;
-            }
-
-            QStringListModel* model = new QStringListModel();
-            model->setStringList(messageList);
-            ui->listView->setModel(model);
+            ui->listWidget->addItem(text);
         }
     }
-
 }
