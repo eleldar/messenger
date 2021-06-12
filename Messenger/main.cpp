@@ -37,22 +37,6 @@ int main(int argc, char *argv[])
         //return false;
     }
 
-    //Reading of the data
-    if (!query.exec("SELECT * FROM messages;")) {
-        QMessageBox::critical(NULL,QObject::tr("Ошибка"), query.lastError().text());
-        //return false;
-    }
-
-    QSqlRecord rec     = query.record();
-    int id;
-    QString strMessage;
-
-    while (query.next()) {
-        id = query.value(rec.indexOf("id")).toInt();
-        strMessage  = query.value(rec.indexOf("message")).toString();
-        qDebug() << id << strMessage;
-    }
-
     MainWindow w;
     w.show();
     return a.exec();
