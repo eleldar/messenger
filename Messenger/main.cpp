@@ -1,7 +1,5 @@
 #include "mainwindow.h"
-
 #include <QApplication>
-
 
 static bool createConnection()
 {
@@ -20,11 +18,9 @@ static bool createConnection()
 // ----------------------------------------------------------------------
 int main(int argc, char *argv[])
 {
-
     QApplication a(argc, argv);
 
     if (!createConnection()) {
-
         return -1;
     }
 
@@ -33,7 +29,7 @@ int main(int argc, char *argv[])
     QString   str  = "CREATE TABLE messages ("
                          "id SERIAL, "
                          "timestamp timestamp default current_timestamp,"
-                         "message  VARCHAR(100), "
+                         "message  VARCHAR(200), "
                          "read  INTEGER"
                      ");";
     if (!query.exec(str)) {
@@ -41,38 +37,20 @@ int main(int argc, char *argv[])
         //return false;
     }
 
-    //Adding some information
-    QString strF =
-          "INSERT INTO  messages (message, read) "
-          "VALUES('%2', %3);";
-
-    str = strF.arg("Hello 1")
-              .arg("1");
-
-    if (!query.exec(str)) {
-        QMessageBox::critical(NULL,QObject::tr("Ошибка"), query.lastError().text());
-        return false;
-    }
-
-    str = strF.arg("Hello 2")
-              .arg("2");
-    if (!query.exec(str)) {
-        QMessageBox::critical(NULL,QObject::tr("Ошибка"), query.lastError().text());
-        return false;
-    }
-
+    //Reading of the data
     if (!query.exec("SELECT * FROM messages;")) {
         QMessageBox::critical(NULL,QObject::tr("Ошибка"), query.lastError().text());
-        return false;
+        //return false;
     }
 
-    //Reading of the data
     QSqlRecord rec     = query.record();
+    int id;
     QString strMessage;
 
     while (query.next()) {
+        id = query.value(rec.indexOf("id")).toInt();
         strMessage  = query.value(rec.indexOf("message")).toString();
-        QMessageBox::critical(NULL,QObject::tr("Ok"), strMessage);
+        qDebug() << id << strMessage;
     }
 
     MainWindow w;
