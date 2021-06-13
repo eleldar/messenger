@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(ui->pushButton, SIGNAL(clicked()), SLOT(on_pushButton_clicked()));
     QSqlQuery query;
     // Чтение базы данных
-    if (!query.exec("SELECT * FROM messages;")) {
+    if (!query.exec("SELECT * from messages ORDER BY id;")) {
         QMessageBox::critical(NULL,QObject::tr("Ошибка"), "База данных недоступна");
     }
     QSqlRecord rec     = query.record();
