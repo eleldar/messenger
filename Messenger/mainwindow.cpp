@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
         QSqlQuery query;
         QString   str  = "CREATE TABLE messages (id SERIAL, message  VARCHAR(200), read  INTEGER);";
         if (!query.exec(str)) {
-            QMessageBox::critical(NULL,QObject::tr("Ошибка"), "Невозможно создать таблицу базы данных");
+            QMessageBox::critical(NULL,QObject::tr("Ошибка"), "Таблица базы данных уже существует!");
         }
     }
     else {
@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(ui->pushButton, SIGNAL(clicked()), SLOT(on_pushButton_clicked()));
     QSqlQuery query;
     // Чтение базы данных
-    if (!query.exec("SELECT * from messages ORDER BY id;")) {
+    if (!query.exec("SELECT * FROM messages ORDER BY id;")) {
         QMessageBox::critical(NULL,QObject::tr("Ошибка"), "База данных недоступна");
     }
     QSqlRecord rec     = query.record();

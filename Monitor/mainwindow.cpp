@@ -1,7 +1,10 @@
 #include <QtWidgets>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+
+QMap<int, QListWidgetItem*> idPointer;
 int endId = 0;
+int dbSize = 0;
 
 static bool createConnection()
 {
@@ -21,19 +24,31 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    ui->setupUi(this);
-    //ui->listWidget->setSelectionMode(QAbstractItemView::MultiSelection);
+    if (!createConnection()) {QMessageBox::critical(NULL,QObject::tr("Ошибка"), "База данных недоступна");}
+    // Чтение базы данных
+    QSqlQuery query;
+    if (!query.exec("SELECT * FROM messages ORDER BY id;")) {
+        QMessageBox::critical(NULL, QObject::tr("Ошибка"), "База данных не читается");
+    }
+    QSqlRecord rec     = query.record();
+    QString strMessage;
+    int currentId;
 
-    if (createConnection()) {
-        // асинхронный цикл опроса БД
-        QTimer* ptimer = new QTimer(this);
-        connect(ptimer, SIGNAL(timeout()), SLOT(database_pull()));
-        ptimer->start(500);
-        database_pull();
+    // формируем базу указателей при загрузке программы, если не пустая
+    if (query.size() > 0){
+        while (query.next()) {
+            currentId = query.value(rec.indexOf("id")).toInt();
+            QListWidgetItem *str = new QListWidgetItem(query.value(1).toString());
+            idPointer[currentId] = str;
+        }
+        endId = currentId; // номер последнего id в БД
     }
-    else {
-        QMessageBox::critical(NULL,QObject::tr("Ошибка"), "База данных недоступна");
-    }
+
+    ui->setupUi(this);
+    // асинхронный цикл опроса БД
+    QTimer* ptimer = new QTimer(this);
+    connect(ptimer, SIGNAL(timeout()), SLOT(database_pull()));
+    ptimer->start(500);
 }
 
 MainWindow::~MainWindow()
@@ -42,83 +57,72 @@ MainWindow::~MainWindow()
 }
 
 void MainWindow::on_pushButton_clicked()
+// удаление выделенных (прочитанных) сообщений
 {
-    // удаление выделенных (прочитанных) сообщений
-    //ui->listWidget->addItem("нужно убирать прочитанные");
-    //ui->listWidget->clear();
-
-    QSqlQuery query;
     // Чтение базы данных
-    if (!query.exec("SELECT * from messages ORDER BY id;")) {
+    QSqlQuery query;
+    if (!query.exec("SELECT * FROM messages ORDER BY id;")) {
         QMessageBox::critical(NULL, QObject::tr("Ошибка"), "База данных не читается");
     }
-    /*
-    // получаем указатели на элементы списка
-    for(int i = 0; i < ui->listWidget->count(); ++i)
-    {
-        QListWidgetItem* item = ui->listWidget->item(i);
-        if (ui->listWidget->currentItem() == item){
-
-            qDebug() << ui->listWidget->currentItem();
-        }
-    }
-    // получаем id сообщений из БД
-    QSqlRecord rec     = query.record();
-    int idMessage;
-    while (query.next()) {
-        idMessage  = query.value(rec.indexOf("id")).toInt();
-        qDebug() << idMessage;
-    }
-    //соотвествие между id сообщения и указателем
-    QSqlRecord rec     = query.record();
-    int i = 0;
-    int idMessage;
-    while (query.next()) {
-        QListWidgetItem* item = ui->listWidget->item(i++);
-        idMessage  = query.value(rec.indexOf("id")).toInt();
-        qDebug() << idMessage << item;
-    }
-
-    // исправить !!!
-    QSqlRecord rec     = query.record();
-    int i = 0;
-    int idMessage;
-    QString idStr;
-    QListWidgetItem* itemPtr;
-    //query.exec("SELECT * from messages ORDER BY id;");
-    while (query.next()) {
-        itemPtr = ui->listWidget->item(i++);
-        idMessage  = query.value(rec.indexOf("id")).toInt();
-        idStr = QString::number(idMessage);
-        qDebug() << idStr;
-        if (ui->listWidget->currentItem() == itemPtr){
+    QSqlRecord rec = query.record();
+    query.exec("SELECT * FROM messages ORDER BY id;");
+    // меняем флаг чтения
+    QListWidgetItem* itemPtr = ui->listWidget->currentItem();
+    QString idStr; // искомый ID for SQL request
+    QMap<int, QListWidgetItem*>::iterator it = idPointer.begin();
+    for (;it !=idPointer.end(); ++it){
+        if (itemPtr == it.value()){
+            idStr = QString::number(it.key());
             QString request = "UPDATE messages SET read = 1 WHERE id = " + idStr + ";";
             query.exec(request);
-            qDebug() << ui->listWidget->currentItem() << idMessage << itemPtr;
-        }
-    }
-    */
-    ui->listWidget->clear();
-    endId = 0;
+            break;
+            }
+    }    
+    monitor_update();
 }
 
 void MainWindow::database_pull()
 {
     QSqlQuery query;
     // Чтение базы данных
-    if (!query.exec("SELECT * from messages ORDER BY id;")) {
+    if (!query.exec("SELECT * FROM messages ORDER BY id;")) {
         QMessageBox::critical(NULL, QObject::tr("Ошибка"), "База данных не читается");
     }
-    QSqlRecord rec     = query.record();
+    QSqlRecord rec = query.record();
     QString strMessage;
-    int currentId;
-    while (query.next()) {
-        currentId = query.value(rec.indexOf("id")).toInt();
-        int read = query.value(rec.indexOf("read")).toInt();
-        strMessage  = query.value(rec.indexOf("message")).toString();
-        if (currentId > endId & read==0) {
-            endId = currentId;
-            ui->listWidget->addItem(strMessage);
+    int currentId = query.size();
+    // добавляем в базу указателей при изменении базы данных
+    if (currentId > endId){
+        for (; currentId > endId; ++endId) {
+            query.seek(endId);
+            QListWidgetItem *str = new QListWidgetItem(query.value(1).toString());
+            idPointer[currentId] = str;
         }
+    }
+    query.exec("SELECT id FROM messages WHERE read=0;");
+    rec = query.record();
+    if(dbSize != currentId){
+        dbSize = currentId;
+        while (query.next()) {
+            int currId = query.value(rec.indexOf("id")).toInt();
+            ui->listWidget->addItem(idPointer[currId]);
+        }
+     }
+}
+
+void MainWindow::monitor_update()
+{
+    // ошибка после clear
+    ui->listWidget->blockSignals(true);
+    ui->listWidget->clear();
+    ui->listWidget->blockSignals(false);
+    QSqlQuery query;
+    QSqlRecord rec     = query.record();
+    ui->listWidget->removeItemWidget(ui->listWidget->currentItem());
+    query.exec("SELECT id FROM messages WHERE read=0;");
+    rec     = query.record();
+    while (query.next()) {
+        int currId = query.value(rec.indexOf("id")).toInt();
+        ui->listWidget->addItem(idPointer[currId]);
     }
 }

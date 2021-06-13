@@ -22,6 +22,7 @@ public:
 private slots:
     void on_pushButton_clicked();
     void database_pull();
+    void monitor_update();
 
 private:
     Ui::MainWindow *ui;
