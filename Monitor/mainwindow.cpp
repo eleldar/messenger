@@ -1,6 +1,7 @@
 #include <QtWidgets>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+int endId = 0;
 
 static bool createConnection()
 {
@@ -22,23 +23,14 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     if (createConnection()) {
-        QSqlQuery query;
-        //Reading of the data
-        if (!query.exec("SELECT * FROM messages;")) {
-            QMessageBox::critical(NULL,QObject::tr("Ошибка"), query.lastError().text());
-            //return false;
-        }
-        QSqlRecord rec     = query.record();
-        QString strMessage;
-        while (query.next()) {
-            strMessage  = query.value(rec.indexOf("message")).toString();
-            ui->listWidget->addItem(strMessage);
-        }
-        // нужен цикл опроса БД
-        // с фильтрацией: флаг чтения и времени создания
+        // асинхронный цикл опроса БД
+        QTimer* ptimer = new QTimer(this);
+        connect(ptimer, SIGNAL(timeout()), SLOT(database_pull()));
+        ptimer->start(500);
+        database_pull();
     }
     else {
-        QMessageBox::critical(NULL,QObject::tr("Ошибка"), "Проблемы с БД");
+        QMessageBox::critical(NULL,QObject::tr("Ошибка"), "База данных недоступна");
     }
 }
 
@@ -49,7 +41,28 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
-    //Adding some information
+    // удаление выделенных (прочитанных) сообщений
     ui->listWidget->addItem("нужно убирать прочитанные");
-    ui->listWidget->clear();
+    //ui->listWidget->clear();
+}
+
+void MainWindow::database_pull()
+{
+    QSqlQuery query;
+    // Чтение базы данных
+    if (!query.exec("SELECT * FROM messages;")) {
+        QMessageBox::critical(NULL, QObject::tr("Ошибка"), "База данных не читается");
+    }
+    QSqlRecord rec     = query.record();
+    QString strMessage;
+    int currentId;
+    // нужна фильтрация: флаг чтения
+    while (query.next()) {
+        currentId = query.value(rec.indexOf("id")).toInt();
+        strMessage  = query.value(rec.indexOf("message")).toString();
+        if (currentId > endId) {
+            endId = currentId;
+            ui->listWidget->addItem(strMessage);
+        }
+    }
 }
