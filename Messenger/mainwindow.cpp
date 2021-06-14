@@ -21,15 +21,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     if (createConnection()) {
         //Создание таблицы базы данных
         QSqlQuery query;
-        QString   str  = "CREATE TABLE messages (id SERIAL, message  VARCHAR(200), read  INTEGER);";
-        if (!query.exec(str)) {
-            QMessageBox::critical(NULL,QObject::tr("Ошибка"), "Таблица базы данных уже существует!");
-        }
+        QString   str  = "CREATE TABLE IF NOT EXISTS messages (id SERIAL, message  VARCHAR(200), read  INTEGER);";
+        query.exec(str);
     }
-    else {
-        QMessageBox::critical(NULL,QObject::tr("Ошибка"), "База данных недоступна");
-    }
-
     ui->setupUi(this);
     connect(ui->pushButton, SIGNAL(clicked()), SLOT(on_pushButton_clicked()));
     QSqlQuery query;

@@ -2,9 +2,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-QMap<int, QListWidgetItem*> idPointer;
-int endId = 0;
-int dbSize = 0;
+QMap<int, QListWidgetItem*> idPointer; // словарь указателей
+int endId = 0;  // номер последнего id в БД
+int dbSize = 0; // размер БД
 
 static bool createConnection()
 {
@@ -34,14 +34,14 @@ MainWindow::MainWindow(QWidget *parent)
     QString strMessage;
     int currentId;
 
-    // формируем базу указателей при загрузке программы, если не пустая
+    // при загрузке программы формируем словарь указателей
     if (query.size() > 0){
         while (query.next()) {
             currentId = query.value(rec.indexOf("id")).toInt();
             QListWidgetItem *str = new QListWidgetItem(query.value(1).toString());
             idPointer[currentId] = str;
+            endId = currentId;
         }
-        endId = currentId; // номер последнего id в БД
     }
 
     ui->setupUi(this);
@@ -59,14 +59,12 @@ MainWindow::~MainWindow()
 void MainWindow::on_pushButton_clicked()
 // удаление выделенных (прочитанных) сообщений
 {
-    // Чтение базы данных
     QSqlQuery query;
     if (!query.exec("SELECT * FROM messages ORDER BY id;")) {
         QMessageBox::critical(NULL, QObject::tr("Ошибка"), "База данных не читается");
     }
     QSqlRecord rec = query.record();
     query.exec("SELECT * FROM messages ORDER BY id;");
-    // меняем флаг чтения
     QListWidgetItem* itemPtr = ui->listWidget->currentItem();
     QString idStr; // искомый ID for SQL request
     QMap<int, QListWidgetItem*>::iterator it = idPointer.begin();
@@ -82,16 +80,15 @@ void MainWindow::on_pushButton_clicked()
 }
 
 void MainWindow::database_pull()
+// отображение и добавление записей в словарь при изменении базы данных
 {
     QSqlQuery query;
-    // Чтение базы данных
     if (!query.exec("SELECT * FROM messages ORDER BY id;")) {
         QMessageBox::critical(NULL, QObject::tr("Ошибка"), "База данных не читается");
     }
     QSqlRecord rec = query.record();
     QString strMessage;
     int currentId = query.size();
-    // добавляем в базу указателей при изменении базы данных
     if (currentId > endId){
         for (; currentId > endId; ++endId) {
             query.seek(endId);
@@ -116,10 +113,8 @@ void MainWindow::monitor_update()
     for(int i=0; i<ui->listWidget->count(); ++i){
         if (ui->listWidget->item(i) == ui->listWidget->currentItem()){
             ui->listWidget->model()->removeRow(i);
-            qDebug() << i;
             break;
         }
-
     }
     QSqlQuery query;
     QSqlRecord rec     = query.record();
