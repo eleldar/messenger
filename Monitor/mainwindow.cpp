@@ -112,13 +112,17 @@ void MainWindow::database_pull()
 
 void MainWindow::monitor_update()
 {
-    // ошибка после clear
-    ui->listWidget->blockSignals(true);
-    ui->listWidget->clear();
-    ui->listWidget->blockSignals(false);
+    ui->listWidget->setFocus();
+    for(int i=0; i<ui->listWidget->count(); ++i){
+        if (ui->listWidget->item(i) == ui->listWidget->currentItem()){
+            ui->listWidget->model()->removeRow(i);
+            qDebug() << i;
+            break;
+        }
+
+    }
     QSqlQuery query;
     QSqlRecord rec     = query.record();
-    ui->listWidget->removeItemWidget(ui->listWidget->currentItem());
     query.exec("SELECT id FROM messages WHERE read=0;");
     rec     = query.record();
     while (query.next()) {
