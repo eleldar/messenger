@@ -76,7 +76,7 @@ void MainWindow::on_pushButton_clicked()
             break;
             }
     }    
-    monitor_update();
+    delete_element();
 }
 
 void MainWindow::database_pull()
@@ -107,7 +107,7 @@ void MainWindow::database_pull()
      }
 }
 
-void MainWindow::monitor_update()
+void MainWindow::delete_element()
 {
     ui->listWidget->setFocus();
     for(int i=0; i<ui->listWidget->count(); ++i){
@@ -115,13 +115,5 @@ void MainWindow::monitor_update()
             ui->listWidget->model()->removeRow(i);
             break;
         }
-    }
-    QSqlQuery query;
-    QSqlRecord rec     = query.record();
-    query.exec("SELECT id FROM messages WHERE read=0;");
-    rec     = query.record();
-    while (query.next()) {
-        int currId = query.value(rec.indexOf("id")).toInt();
-        ui->listWidget->addItem(idPointer[currId]);
-    }
+    }    
 }
